@@ -87,7 +87,6 @@ export async function getMe(
 
 export async function createPlaylist(
   token: string,
-  userId: string,
   name: string,
   description: string,
 ): Promise<{
@@ -95,7 +94,8 @@ export async function createPlaylist(
   name: string;
   external_urls: { spotify: string };
 }> {
-  return spotifyFetch(token, `/users/${userId}/playlists`, {
+  // Endpoint atualizado em 2026: POST /me/playlists (era /users/{id}/playlists).
+  return spotifyFetch(token, "/me/playlists", {
     method: "POST",
     body: JSON.stringify({ name, description, public: false }),
   });
@@ -106,7 +106,8 @@ export async function addTracksToPlaylist(
   playlistId: string,
   trackUris: string[],
 ): Promise<void> {
-  await spotifyFetch(token, `/playlists/${playlistId}/tracks`, {
+  // Endpoint atualizado em 2026: /items (era /tracks).
+  await spotifyFetch(token, `/playlists/${playlistId}/items`, {
     method: "POST",
     body: JSON.stringify({ uris: trackUris }),
   });
