@@ -8,6 +8,8 @@ import {
 } from "./spotify";
 import { getTimeContext, getWeather } from "./context";
 
+const SPOTIFY_TRACK_URI_RE = /^spotify:track:[A-Za-z0-9]{22}$/;
+
 export function buildTools(accessToken: string) {
   let loggedMe = false;
   return {
@@ -87,8 +89,10 @@ export function buildTools(accessToken: string) {
             z.object({
               uri: z
                 .string()
-                .regex(/^spotify:track:[A-Za-z0-9]+$/)
-                .describe("URI do Spotify (formato spotify:track:ID)"),
+                .regex(SPOTIFY_TRACK_URI_RE)
+                .describe(
+                  "URI EXATA do Spotify retornada pelo searchSpotify (formato spotify:track:XXXXXXXXXXXXXXXXXXXXXX, 22 chars base62). NUNCA inventar ou modificar.",
+                ),
               name: z.string().describe("Nome da música"),
               artist: z.string().describe("Nome do artista principal"),
             }),
@@ -96,7 +100,7 @@ export function buildTools(accessToken: string) {
           .min(10)
           .max(50)
           .describe(
-            "Lista de tracks propostos com URI, nome e artista. Pegue dos resultados de searchSpotify. Entre 10 e 50 tracks.",
+            "Lista de tracks propostos com URI, nome e artista. Pegue EXATAMENTE dos resultados de searchSpotify (campo .uri). Entre 10 e 50 tracks.",
           ),
       }),
       execute: async (input) => input,
@@ -104,7 +108,7 @@ export function buildTools(accessToken: string) {
 
     createPlaylist: tool({
       description:
-        "Cria a playlist real na conta do Spotify do usuário. SÓ CHAME ISSO depois que o usuário tiver CONFIRMADO uma proposta feita via proposePlaylist (ele disse 'ok', 'manda', 'fechou', 'pode criar', 'sim', 'perfeito', etc), OU se o usuário pediu explicitamente pra criar SEM revisar. Reaproveite name, description e URIs da proposta anterior.",
+        "Cria a playlist real na conta do Spotify. SÓ chame depois que o usuário CONFIRMOU a proposta feita via proposePlaylist (ele disse 'ok', 'manda', 'fechou', 'pode criar', 'sim', 'perfeito', etc), OU se ele pediu pra criar SEM revisar. Use os MESMOS URIs da proposta — copia exatamente, não modifica.",
       inputSchema: z.object({
         name: z.string().max(100).describe("Nome da playlist."),
         description: z
@@ -112,19 +116,41 @@ export function buildTools(accessToken: string) {
           .max(300)
           .describe("Descrição curta da playlist."),
         trackUris: z
-          .array(z.string().regex(/^spotify:track:[A-Za-z0-9]+$/))
+          .array(z.string().regex(SPOTIFY_TRACK_URI_RE))
           .min(5)
           .max(50)
-          .describe("URIs do Spotify. Geralmente os mesmos da proposta."),
+          .describe(
+            "URIs do Spotify EXATAS da proposta (cada uma com 22 chars base62 após 'spotify:track:'). Não invente.",
+          ),
       }),
       execute: async ({ name, description, trackUris }) => {
+        // Sanitiza: trim, dedup, valida formato estrito.
+        const seen = new Set<string>();
+        const valid: string[] = [];
+        const invalid: string[] = [];
+        for (const raw of trackUris) {
+          const uri = raw.trim();
+          if (!SPOTIFY_TRACK_URI_RE.test(uri)) {
+            invalid.push(raw);
+            continue;
+          }
+          if (seen.has(uri)) continue;
+          seen.add(uri);
+          valid.push(uri);
+        }
+        if (valid.length < 5) {
+          return {
+            error: `Não cheguei a criar nada. Só ${valid.length} URI(s) válidas após filtrar duplicatas e formatos inválidos. ${invalid.length > 0 ? `Inválidas: ${invalid.slice(0, 3).join(", ")}${invalid.length > 3 ? "..." : ""}.` : ""} Refaça a proposta puxando as URIs EXATAS do retorno do searchSpotify.`,
+          };
+        }
         const playlist = await createPlaylist(accessToken, name, description);
-        await addTracksToPlaylist(accessToken, playlist.id, trackUris);
+        await addTracksToPlaylist(accessToken, playlist.id, valid);
         return {
           playlist_id: playlist.id,
           name: playlist.name,
           url: playlist.external_urls.spotify,
-          track_count: trackUris.length,
+          track_count: valid.length,
+          filtered_out: trackUris.length - valid.length,
         };
       },
     }),

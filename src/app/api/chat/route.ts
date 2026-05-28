@@ -29,7 +29,13 @@ Atalhos:
 Regras gerais:
 - Sempre português brasileiro, tom de amigo musical informal.
 - Resposta curta. Sem listas grandes ou headers — a proposta visual mostra os tracks.
-- Não liste manualmente os tracks na resposta de texto. O componente de proposta já mostra.`;
+- Não liste manualmente os tracks na resposta de texto. O componente de proposta já mostra.
+
+⚠️ CRÍTICO sobre URIs:
+- Cada track tem uma URI no formato 'spotify:track:XXXXXXXXXXXXXXXXXXXXXX' (22 chars base62 depois de 'spotify:track:').
+- Você DEVE pegar a URI EXATA do campo .uri retornado por searchSpotify. NÃO inventa, NÃO modifica, NÃO digita manualmente.
+- Ao confirmar uma proposta com createPlaylist, copia as URIs LITERALMENTE do retorno da proposePlaylist anterior (campo tracks[].uri).
+- Se você não tem a URI exata de uma música nos resultados de busca, NÃO INCLUI ela. Melhor 25 tracks bons que 40 com URIs erradas.`;
 
 export async function POST(req: Request) {
   const session = await auth();
