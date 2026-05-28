@@ -40,7 +40,7 @@ export function buildTools(accessToken: string) {
 
     searchSpotify: tool({
       description:
-        "Busca tracks no Spotify. Use queries variadas (em pt e en) explorando gêneros, anos, moods e artistas próximos da vibe. Chame VÁRIAS VEZES com queries diferentes pra ter diversidade. Suporta filtros do Spotify: year:1970-1979, genre:rock, artist:foo.",
+        "Busca tracks no Spotify (retorna até 10 por chamada). Como cada busca traz só 10 tracks, CHAME VÁRIAS VEZES (4 a 8) com queries diferentes pra ter diversidade real. Varia gêneros, anos, moods, artistas próximos, em pt e en. Suporta filtros do Spotify: year:1970-1979, genre:rock, artist:foo.",
       inputSchema: z.object({
         query: z
           .string()

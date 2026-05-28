@@ -44,9 +44,10 @@ async function spotifyFetch<T>(
 export async function searchTracks(
   token: string,
   query: string,
-  limit = 20,
+  limit = 10,
 ): Promise<{ tracks: SpotifyTrack[] }> {
-  const safeLimit = Math.min(50, Math.max(1, Math.trunc(limit)));
+  // Spotify changed limits in 2026: search is now capped at 10 (was 50).
+  const safeLimit = Math.min(10, Math.max(1, Math.trunc(limit)));
   const path = `/search?q=${encodeURIComponent(query)}&type=track&limit=${safeLimit}`;
   type SearchResponse = {
     tracks: {

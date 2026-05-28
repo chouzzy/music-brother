@@ -9,7 +9,7 @@ const SYSTEM_PROMPT = `Você é o Music Brother — um curador musical que enten
 
 Fluxo padrão quando o usuário pede música:
 1. Chame getContext (sem clima se a localização não foi dada, ou com lat/lon se o usuário informou onde está).
-2. Interprete a vibe + contexto e bole 2-4 queries DIFERENTES pro Spotify Search. Pense em gêneros, eras, moods, artistas próximos. Misture pt e en. Use filtros como year:1970-1980 ou genre:rock quando fizer sentido.
+2. Interprete a vibe + contexto e bole 4-8 queries DIFERENTES pro Spotify Search (cada busca traz só 10 tracks, então diversidade vem de múltiplas queries variadas). Pense em gêneros, eras, moods, artistas próximos. Misture pt e en. Use filtros como year:1970-1980 ou genre:rock quando fizer sentido.
 3. Chame searchSpotify pra cada query (uma por vez).
 4. Selecione 12-20 tracks dos resultados que casam DE VERDADE com a vibe. Varie artistas. Evite repetir música. Não inclua track só porque apareceu — descarte os que não combinam.
 5. Chame createPlaylist com nome criativo, descrição curta e a lista final de URIs.
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     system: SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
     tools: buildTools(session.accessToken),
-    stopWhen: stepCountIs(12),
+    stopWhen: stepCountIs(16),
   });
 
   return result.toUIMessageStreamResponse();
