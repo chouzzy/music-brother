@@ -7,6 +7,8 @@ import {
   ArrowUp,
   CloudSun,
   ListMusic,
+  Mic,
+  MicOff,
   Music,
   Search,
   Sparkles,
@@ -15,6 +17,7 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { usePlaylistHistory } from "@/lib/use-playlist-history";
+import { useSpeechRecognition } from "@/lib/use-speech-recognition";
 import { PlaylistEmbed } from "./playlist-embed";
 import { PlaylistProposal, type ProposedTrack } from "./playlist-proposal";
 
@@ -126,10 +129,10 @@ export function Chat() {
   const showEmpty = messages.length === 0;
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-3xl flex-col px-4">
+    <div className="mx-auto flex h-full w-full max-w-3xl flex-col overflow-x-hidden px-3 sm:px-4">
       <div
         ref={scrollRef}
-        className="thin-scroll flex-1 overflow-y-auto pb-6 pt-4"
+        className="thin-scroll flex-1 overflow-y-auto overflow-x-hidden pb-6 pt-4"
       >
         {showEmpty ? (
           <EmptyState onPick={submit} />
@@ -216,11 +219,12 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       className={`flex ${isUser ? "justify-end" : "justify-start"}`}
     >
       <div
-        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+        className={`min-w-0 max-w-[85%] break-words rounded-2xl px-4 py-2.5 text-sm ${
           isUser
             ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-[0_4px_20px_-8px_rgba(16,185,129,0.6)]"
             : "glass text-zinc-100"
         }`}
+        style={{ overflowWrap: "anywhere" }}
       >
         {message.parts.map((part, i) => {
           if (part.type === "text") {
@@ -347,32 +351,108 @@ function Composer({
   onSubmit: () => void;
   busy: boolean;
 }) {
+  const speech = useSpeechRecognition("pt-BR");
+  const baseRef = useRef("");
+
+  // Sync transcript into the input while recording, preserving any text
+  // that was already there when the user pressed the mic.
+  useEffect(() => {
+    if (!speech.listening && !speech.transcript) return;
+    const combined = baseRef.current
+      ? `${baseRef.current} ${speech.transcript}`.replace(/\s+/g, " ").trim()
+      : speech.transcript;
+    onChange(combined);
+  }, [speech.transcript, speech.listening, onChange]);
+
+  const toggleMic = () => {
+    if (speech.listening) {
+      speech.stop();
+      return;
+    }
+    baseRef.current = value.trim();
+    speech.reset();
+    speech.start();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      if (speech.listening) speech.stop();
       onSubmit();
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (speech.listening) speech.stop();
+    onSubmit();
+  };
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
-      className="pb-6 pt-2"
-    >
-      <div className="glass flex items-end gap-2 rounded-3xl p-2 pl-4 transition-all focus-within:border-emerald-500/40 focus-within:shadow-[0_0_30px_-10px_rgba(52,211,153,0.5)]">
+    <form onSubmit={handleSubmit} className="pb-6 pt-2">
+      <AnimatePresence>
+        {speech.error && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-2 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-center text-[11px] text-red-300"
+          >
+            {speech.error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div
+        className={`glass flex min-w-0 items-end gap-1.5 rounded-3xl p-1.5 pl-3 transition-all sm:gap-2 sm:p-2 sm:pl-4 ${
+          speech.listening
+            ? "border-red-500/40 shadow-[0_0_30px_-10px_rgba(239,68,68,0.6)]"
+            : "focus-within:border-emerald-500/40 focus-within:shadow-[0_0_30px_-10px_rgba(52,211,153,0.5)]"
+        }`}
+      >
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="conta a vibe..."
+          placeholder={speech.listening ? "ouvindo…" : "conta a vibe..."}
           rows={1}
           disabled={busy}
-          className="thin-scroll flex-1 resize-none border-0 bg-transparent py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-0 disabled:opacity-50"
+          className="thin-scroll min-w-0 flex-1 resize-none border-0 bg-transparent py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-0 disabled:opacity-50"
           style={{ maxHeight: "8rem" }}
         />
+
+        {speech.supported && (
+          <motion.button
+            type="button"
+            onClick={toggleMic}
+            disabled={busy}
+            whileTap={{ scale: 0.9 }}
+            title={speech.listening ? "Parar gravação" : "Falar a vibe"}
+            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all disabled:opacity-40 ${
+              speech.listening
+                ? "bg-red-500 text-white shadow-[0_0_24px_-4px_rgba(239,68,68,0.8)]"
+                : "bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-zinc-100"
+            }`}
+          >
+            {speech.listening ? (
+              <>
+                <MicOff className="h-4 w-4" strokeWidth={2.5} />
+                <motion.span
+                  className="absolute inset-0 rounded-full bg-red-500"
+                  animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
+                  transition={{
+                    duration: 1.4,
+                    repeat: Infinity,
+                    ease: "easeOut",
+                  }}
+                />
+              </>
+            ) : (
+              <Mic className="h-4 w-4" strokeWidth={2.5} />
+            )}
+          </motion.button>
+        )}
+
         <motion.button
           type="submit"
           disabled={busy || !value.trim()}

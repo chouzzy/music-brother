@@ -56,14 +56,18 @@ export function PlaylistProposal({
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.05 * i, duration: 0.3 }}
-              className="flex items-center gap-2.5 text-xs"
+              className="flex min-w-0 items-center gap-2 text-xs"
             >
               <span className="w-5 shrink-0 text-right font-mono text-[10px] text-zinc-600">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <span className="truncate text-zinc-200">{t.name}</span>
+              <span className="min-w-0 flex-1 truncate text-zinc-200">
+                {t.name}
+              </span>
               <span className="shrink-0 text-zinc-500">·</span>
-              <span className="truncate text-zinc-400">{t.artist}</span>
+              <span className="min-w-0 max-w-[40%] shrink truncate text-zinc-400">
+                {t.artist}
+              </span>
             </motion.li>
           ))}
         </ol>
