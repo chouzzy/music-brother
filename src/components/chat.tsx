@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowUp,
   CloudSun,
+  ListMusic,
   Music,
   Search,
   Sparkles,
@@ -15,6 +16,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { usePlaylistHistory } from "@/lib/use-playlist-history";
 import { PlaylistEmbed } from "./playlist-embed";
+import { PlaylistProposal, type ProposedTrack } from "./playlist-proposal";
 
 type ToolPart = {
   type: `tool-${string}`;
@@ -50,7 +52,8 @@ const TOOL_META: Record<
 > = {
   "tool-getContext": { label: "lendo o contexto", icon: CloudSun },
   "tool-searchSpotify": { label: "buscando no Spotify", icon: Search },
-  "tool-createPlaylist": { label: "montando a playlist", icon: Sparkles },
+  "tool-proposePlaylist": { label: "montando proposta", icon: ListMusic },
+  "tool-createPlaylist": { label: "criando no Spotify", icon: Sparkles },
 };
 
 const SUGGESTIONS = [
@@ -229,9 +232,11 @@ function MessageBubble({ message }: { message: ChatMessage }) {
               </div>
             );
           }
-          if (part.type === "tool-createPlaylist" &&
+          if (
+            part.type === "tool-createPlaylist" &&
             part.state === "output-available" &&
-            part.output) {
+            part.output
+          ) {
             const out = part.output as CreatePlaylistOutput;
             return (
               <PlaylistEmbed
@@ -240,6 +245,27 @@ function MessageBubble({ message }: { message: ChatMessage }) {
                 name={out.name}
                 url={out.url}
                 trackCount={out.track_count}
+              />
+            );
+          }
+          if (
+            part.type === "tool-proposePlaylist" &&
+            part.state === "output-available" &&
+            part.output
+          ) {
+            const out = part.output as {
+              name: string;
+              description: string;
+              vibe_summary: string;
+              tracks: ProposedTrack[];
+            };
+            return (
+              <PlaylistProposal
+                key={i}
+                name={out.name}
+                description={out.description}
+                vibe_summary={out.vibe_summary}
+                tracks={out.tracks}
               />
             );
           }

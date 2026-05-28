@@ -64,27 +64,58 @@ export function buildTools(accessToken: string) {
       },
     }),
 
-    createPlaylist: tool({
+    proposePlaylist: tool({
       description:
-        "Cria uma playlist privada na conta do usuário com as tracks escolhidas. Chame DEPOIS de já ter buscado e selecionado as músicas via searchSpotify. Dá um nome criativo e bem-humorado que reflita a vibe pedida.",
+        "Apresenta uma PROPOSTA de playlist ao usuário ANTES de criar de fato. SEMPRE use isso depois de buscar e curar — não cria nada no Spotify, só mostra a proposta pro usuário aprovar. Aguarda a resposta dele.",
       inputSchema: z.object({
         name: z
           .string()
           .max(100)
-          .describe("Nome da playlist. Criativo, reflete a vibe."),
+          .describe("Nome criativo proposto da playlist."),
         description: z
           .string()
           .max(300)
+          .describe("Descrição curta da playlist (até 300 chars)."),
+        vibe_summary: z
+          .string()
+          .max(200)
           .describe(
-            "Descrição curta da playlist (até 300 chars). Estilo casual.",
+            "Como você interpretou a vibe — 1 frase casual. Ex: 'rock dos 70 com pegada rebelde e bluesy', 'lo-fi melancólico pra estudar'",
           ),
+        tracks: z
+          .array(
+            z.object({
+              uri: z
+                .string()
+                .regex(/^spotify:track:[A-Za-z0-9]+$/)
+                .describe("URI do Spotify (formato spotify:track:ID)"),
+              name: z.string().describe("Nome da música"),
+              artist: z.string().describe("Nome do artista principal"),
+            }),
+          )
+          .min(10)
+          .max(50)
+          .describe(
+            "Lista de tracks propostos com URI, nome e artista. Pegue dos resultados de searchSpotify. Entre 10 e 50 tracks.",
+          ),
+      }),
+      execute: async (input) => input,
+    }),
+
+    createPlaylist: tool({
+      description:
+        "Cria a playlist real na conta do Spotify do usuário. SÓ CHAME ISSO depois que o usuário tiver CONFIRMADO uma proposta feita via proposePlaylist (ele disse 'ok', 'manda', 'fechou', 'pode criar', 'sim', 'perfeito', etc), OU se o usuário pediu explicitamente pra criar SEM revisar. Reaproveite name, description e URIs da proposta anterior.",
+      inputSchema: z.object({
+        name: z.string().max(100).describe("Nome da playlist."),
+        description: z
+          .string()
+          .max(300)
+          .describe("Descrição curta da playlist."),
         trackUris: z
           .array(z.string().regex(/^spotify:track:[A-Za-z0-9]+$/))
           .min(5)
           .max(50)
-          .describe(
-            "Lista de URIs do Spotify (formato spotify:track:ID). Pegue dos resultados de searchSpotify. Entre 5 e 50 tracks.",
-          ),
+          .describe("URIs do Spotify. Geralmente os mesmos da proposta."),
       }),
       execute: async ({ name, description, trackUris }) => {
         const playlist = await createPlaylist(accessToken, name, description);
