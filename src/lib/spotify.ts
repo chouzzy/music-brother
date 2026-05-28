@@ -18,14 +18,15 @@ async function spotifyFetch<T>(
   init?: RequestInit,
 ): Promise<T> {
   const method = init?.method ?? "GET";
-  const res = await fetch(`${SPOTIFY_API}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/json",
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+  if (method !== "GET" && method !== "HEAD" && init?.body) {
+    headers["Content-Type"] = "application/json";
+  }
+  const res = await fetch(`${SPOTIFY_API}${path}`, { ...init, headers });
   if (!res.ok) {
     const body = await res.text();
     const wwwAuth = res.headers.get("www-authenticate") ?? "";
