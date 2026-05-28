@@ -129,10 +129,10 @@ export function Chat() {
   const showEmpty = messages.length === 0;
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-3xl flex-col overflow-x-hidden px-3 sm:px-4">
+    <div className="mx-auto flex h-full w-full min-w-0 max-w-3xl flex-col overflow-x-hidden px-3 sm:px-4">
       <div
         ref={scrollRef}
-        className="thin-scroll flex-1 overflow-y-auto overflow-x-hidden pb-6 pt-4"
+        className="thin-scroll w-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden pb-6 pt-4"
       >
         {showEmpty ? (
           <EmptyState onPick={submit} />
@@ -172,25 +172,25 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="flex h-full flex-col items-center justify-center gap-8 py-16 text-center"
+      className="flex h-full w-full min-w-0 flex-col items-center justify-center gap-8 py-12 text-center"
     >
-      <div className="space-y-3">
+      <div className="flex w-full flex-col items-center gap-3 px-2">
         <motion.div
           animate={{ rotate: [0, -8, 8, -4, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/20 to-violet-500/20 shadow-[0_0_60px_-12px_rgba(52,211,153,0.6)]"
+          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400/20 to-violet-500/20 shadow-[0_0_60px_-12px_rgba(52,211,153,0.6)]"
         >
           <Music className="h-7 w-7 text-emerald-300" />
         </motion.div>
-        <h2 className="text-2xl font-semibold tracking-tight">
+        <h2 className="text-balance text-2xl font-semibold tracking-tight">
           Que <span className="gradient-text">vibe</span> é essa hoje?
         </h2>
-        <p className="text-sm text-zinc-500">
+        <p className="text-balance text-sm text-zinc-500">
           Descreve um mood, contexto, ou referência. Eu monto a playlist.
         </p>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex w-full flex-wrap justify-center gap-2 px-2">
         {SUGGESTIONS.map((s, i) => (
           <motion.button
             key={s}
@@ -198,7 +198,7 @@ function EmptyState({ onPick }: { onPick: (s: string) => void }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + i * 0.07 }}
             onClick={() => onPick(s)}
-            className="glass rounded-full px-3.5 py-1.5 text-xs text-zinc-300 transition-all hover:scale-[1.03] hover:border-emerald-500/40 hover:text-zinc-100"
+            className="glass max-w-full truncate rounded-full px-3.5 py-1.5 text-xs text-zinc-300 transition-all hover:scale-[1.03] hover:border-emerald-500/40 hover:text-zinc-100"
           >
             {s}
           </motion.button>

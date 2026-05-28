@@ -8,10 +8,10 @@ export default async function Home() {
   const authed = !!session?.accessToken;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden">
       <div className="bg-aurora" aria-hidden="true" />
       {authed && <Header />}
-      <main className="flex flex-1 flex-col overflow-hidden">
+      <main className="flex w-full min-w-0 flex-1 flex-col overflow-hidden">
         {authed ? <Chat /> : <Landing />}
       </main>
     </div>

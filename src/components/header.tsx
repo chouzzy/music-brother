@@ -11,7 +11,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between px-5 py-4 backdrop-blur-md">
+      <header className="sticky top-0 z-30 flex w-full min-w-0 items-center justify-between gap-2 px-4 py-3 backdrop-blur-md sm:px-5 sm:py-4">
         <Link href="/" className="group flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-violet-500 shadow-[0_0_20px_-4px_rgba(52,211,153,0.6)] transition-transform group-hover:scale-105">
             <span className="text-base font-bold text-zinc-950">♪</span>
