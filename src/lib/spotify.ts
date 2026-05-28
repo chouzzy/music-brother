@@ -43,13 +43,10 @@ async function spotifyFetch<T>(
 export async function searchTracks(
   token: string,
   query: string,
-  limit = 10,
+  limit = 20,
 ): Promise<{ tracks: SpotifyTrack[] }> {
-  const params = new URLSearchParams({
-    q: query,
-    type: "track",
-    limit: String(limit),
-  });
+  const safeLimit = Math.min(50, Math.max(1, Math.trunc(limit)));
+  const path = `/search?q=${encodeURIComponent(query)}&type=track&limit=${safeLimit}`;
   type SearchResponse = {
     tracks: {
       items: Array<{
@@ -64,7 +61,7 @@ export async function searchTracks(
       }>;
     };
   };
-  const data = await spotifyFetch<SearchResponse>(token, `/search?${params}`);
+  const data = await spotifyFetch<SearchResponse>(token, path);
   return {
     tracks: data.tracks.items.map((t) => ({
       id: t.id,

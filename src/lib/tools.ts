@@ -9,6 +9,7 @@ import {
 import { getTimeContext, getWeather } from "./context";
 
 export function buildTools(accessToken: string) {
+  let loggedMe = false;
   return {
     getContext: tool({
       description:
@@ -46,16 +47,20 @@ export function buildTools(accessToken: string) {
           .describe(
             'Query de busca. Exemplos: "classic rock rebellious", "punk brasileiro anos 2000", "lofi hip hop study", "year:2015-2020 indie sad"',
           ),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(20)
-          .default(10)
-          .describe("Quantas tracks retornar (1-20)."),
       }),
-      execute: async ({ query, limit }) => {
-        return searchTracks(accessToken, query, limit);
+      execute: async ({ query }) => {
+        if (!loggedMe) {
+          loggedMe = true;
+          try {
+            const me = await getMe(accessToken);
+            console.log(
+              `[me] id=${me.id} display_name=${me.display_name} email=${me.email ?? "(none)"} product=${me.product ?? "(none)"}`,
+            );
+          } catch (e) {
+            console.error("[me] failed:", e);
+          }
+        }
+        return searchTracks(accessToken, query);
       },
     }),
 
