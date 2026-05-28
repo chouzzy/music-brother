@@ -17,6 +17,7 @@ async function spotifyFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
+  const method = init?.method ?? "GET";
   const res = await fetch(`${SPOTIFY_API}${path}`, {
     ...init,
     headers: {
@@ -27,7 +28,13 @@ async function spotifyFetch<T>(
   });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Spotify ${res.status} ${res.statusText}: ${body}`);
+    const wwwAuth = res.headers.get("www-authenticate") ?? "";
+    console.error(
+      `[spotify] ${method} ${path} → ${res.status} ${res.statusText} | www-authenticate: ${wwwAuth} | body: ${body}`,
+    );
+    throw new Error(
+      `Spotify ${res.status} on ${method} ${path}: ${body}${wwwAuth ? ` (www-authenticate: ${wwwAuth})` : ""}`,
+    );
   }
   if (res.status === 204) return {} as T;
   return res.json() as Promise<T>;
@@ -73,7 +80,9 @@ export async function searchTracks(
   };
 }
 
-export async function getMe(token: string): Promise<{ id: string; display_name: string }> {
+export async function getMe(
+  token: string,
+): Promise<{ id: string; display_name: string; email?: string; product?: string }> {
   return spotifyFetch(token, "/me");
 }
 

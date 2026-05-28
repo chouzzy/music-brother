@@ -83,6 +83,9 @@ export function buildTools(accessToken: string) {
       }),
       execute: async ({ name, description, trackUris }) => {
         const me = await getMe(accessToken);
+        console.log(
+          `[createPlaylist] user.id=${me.id} email=${me.email ?? "(none)"} product=${me.product ?? "(none)"}`,
+        );
         const playlist = await createPlaylist(
           accessToken,
           me.id,
